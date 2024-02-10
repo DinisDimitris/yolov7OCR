@@ -1,6 +1,8 @@
 import argparse
 import time
 from pathlib import Path
+import pytesseract
+from PIL import Image
 
 import cv2
 import torch
@@ -106,6 +108,7 @@ def detect(save_img=False):
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # img.jpg
             txt_path = str(save_dir / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
+            ocr_path = str(save_dir / p.stem) + '_ocr_res' + ('' if dataset.mode == 'image' else f'_{frame}')  # ocr.txt
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             if len(det):
                 # Rescale boxes from img_size to im0 size
@@ -124,11 +127,21 @@ def detect(save_img=False):
                         with open(txt_path + '.txt', 'w') as f:
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
-                    label = f'{names[int(cls)]} {conf:.2f}'
                     if opt.use_ocr:
-                        x= xyxy
-                        c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
-                        print(f"Bounding boxes coordinates for img: {label}, {c1[0]}, {c1[1]}, {c2[0]}, {c2[1]},  " + '\n')
+                        im_cords = xyxy
+                        c1, c2 = (int(im_cords[0]), int(im_cords[1])), (int(im_cords[2]), int(im_cords[3]))
+
+                        pil_image = Image.fromarray(im0)
+                        cropped_image = pil_image.crop((c1[0], c1[1], c2[0], c2[1]))
+
+                        extracted_text = pytesseract.image_to_string(cropped_image)
+
+                        extracted_text = extracted_text.replace('\n', '')
+                        label = f'{names[int(cls)]}'
+                        with open(ocr_path + '.txt', 'a') as f:
+                            f.write('%s : %s\n' % (label, extracted_text))
+
+
                     if save_img or view_img:  # Add bbox to image
                         label = f'{names[int(cls)]} {conf:.2f}'
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
