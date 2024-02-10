@@ -105,7 +105,7 @@ def detect(save_img=False):
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # img.jpg
-            txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
+            txt_path = str(save_dir / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             if len(det):
                 # Rescale boxes from img_size to im0 size
@@ -120,9 +120,15 @@ def detect(save_img=False):
                 for *xyxy, conf, cls in reversed(det):
                     xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                     line = (cls, *xywh, conf) if opt.save_conf else (cls, *xywh)  # label format
-                    with open(txt_path + '.txt', 'a') as f:
-                        f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                    if save_txt:
+                        with open(txt_path + '.txt', 'w') as f:
+                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
+                    label = f'{names[int(cls)]} {conf:.2f}'
+                    if opt.use_ocr:
+                        x= xyxy
+                        c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+                        print(f"Bounding boxes coordinates for img: {label}, {c1[0]}, {c1[1]}, {c2[0]}, {c2[1]},  " + '\n')
                     if save_img or view_img:  # Add bbox to image
                         label = f'{names[int(cls)]} {conf:.2f}'
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
@@ -182,6 +188,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
+    parser.add_argument('--use-ocr', action='store_true', help='use OCR to get the text out of the images')
     opt = parser.parse_args()
     print(opt)
     #check_requirements(exclude=('pycocotools', 'thop'))
