@@ -134,7 +134,9 @@ def detect(save_img=False):
                         pil_image = Image.fromarray(im0)
                         cropped_image = pil_image.crop((c1[0], c1[1], c2[0], c2[1]))
 
-                        extracted_text = pytesseract.image_to_string(cropped_image)
+                        cropped_image_gray = cropped_image.convert('L')
+
+                        extracted_text = pytesseract.image_to_string(cropped_image_gray)
 
                         extracted_text = extracted_text.replace('\n', '')
                         label = f'{names[int(cls)]}'
