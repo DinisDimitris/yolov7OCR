@@ -1,5 +1,11 @@
 # Custom YOLOv7 with pytesseract integration for OCR
 
+pip install tesseract-ocr
+
+uses the vanilla tesseract model from google https://pypi.org/project/tesseract-ocr/
+
+Just run detect.py using --use-ocr argument, and you will get the text results in the runs/ folder
+
 
 Implementation of paper - [YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors](https://arxiv.org/abs/2207.02696)
 
